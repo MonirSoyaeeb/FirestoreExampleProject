@@ -41,6 +41,5 @@ dependencies {
     // Import the Firebase BoM
     implementation 'com.google.firebase:firebase-analytics:18.0.1'
     implementation 'com.google.firebase:firebase-firestore:22.0.1'
-    implementation 'com.google.firebase:firebase-core:22.0.1'
 
 }
