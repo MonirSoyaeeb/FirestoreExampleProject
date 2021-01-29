@@ -21,6 +21,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
@@ -37,7 +38,9 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText editTextTitle;
     private EditText editTextDescription;
+    private EditText editTextPriority;
     private TextView textViewData;
+
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     private CollectionReference notebookRef = db.collection("Notebook");
@@ -51,14 +54,19 @@ public class MainActivity extends AppCompatActivity {
         editTextTitle = findViewById(R.id.edit_text_title);
         editTextDescription = findViewById(R.id.edit_text_description);
         textViewData = findViewById(R.id.text_view_data);
+        editTextPriority = findViewById(R.id.edit_text_priority);
     }
 
     public void addNote(View view) {
         String title = editTextTitle.getText().toString();
         String description = editTextDescription.getText().toString();
+        int priority = Integer.parseInt(editTextPriority.getText().toString());
 
-        Note note = new Note(title,description);
+        if(editTextPriority.length() == 0){
+            editTextPriority.setText("0");
+        }
 
+        Note note = new Note(title,description,priority);
         notebookRef.add(note);
     }
 
@@ -66,11 +74,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        notebookRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
-            String data = "";
-
+        notebookRef.addSnapshotListener(this,new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                String data = "";
                 if(error != null){
                     return;
                 }else {
@@ -78,11 +85,12 @@ public class MainActivity extends AppCompatActivity {
                         Note note = documentSnapshot.toObject(Note.class);
                         note.setDocumentID(documentSnapshot.getId());
 
-                        String documentId = note.getDocumentID();
+                        String documentID = note.getDocumentID();
                         String title = note.getTitle();
                         String description = note.getDescription();
+                        int priority = note.getPriority();
 
-                        data += "DocumentId :"+documentId+ "\nTitle :"+title+"\n"+"Description: "+description+"\n\n";
+                        data += "DocumentId :"+documentID+ "\nTitle :"+title+"\n"+"Description: "+description+"\nPriority : "+priority+"\n\n";
 
                     }
                     textViewData.setText(data);
@@ -93,7 +101,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadNotes(View view) {
-        notebookRef.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+        notebookRef.whereGreaterThanOrEqualTo("priority",1).orderBy("priority", Query.Direction.DESCENDING)
+                .get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
             public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
                 String data = "";
@@ -105,8 +114,9 @@ public class MainActivity extends AppCompatActivity {
                     String documentID = note.getDocumentID();
                     String title = note.getTitle();
                     String description = note.getDescription();
+                    int priority = note.getPriority();
 
-                    data += "DocumentId :"+documentID+ "\nTitle :"+title+"\n"+"Description: "+description+"\n\n";
+                    data += "DocumentId :"+documentID+ "\nTitle :"+title+"\n"+"Description: "+description+"\nPriority : "+priority+"\n\n";
 
                 }
                 textViewData.setText(data);
